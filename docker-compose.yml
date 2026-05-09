@@ -1,0 +1,35 @@
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: tg_ai_chats
+      POSTGRES_USER: bot
+      POSTGRES_PASSWORD: bot
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bot -d tg_ai_chats"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  bot:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file: .env
+    environment:
+      DB_HOST: db
+      DB_PORT: "5432"
+      DB_USER: bot
+      DB_PASSWORD: bot
+      DB_NAME: tg_ai_chats
+    volumes:
+      - faiss_data:/app/faiss_data
+
+volumes:
+  pgdata:
+  faiss_data:
